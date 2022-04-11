@@ -72,10 +72,8 @@ data_mode_switch_vacation = '{ "actions": [ ' \
 hub_relay_reset ='{ "actions": ['\
     '{'\
       '"state": 0,' \
-      '"pause_after_action": 60' \
-    '},' \
-    '{ "state": 1,' \
-     ' "pause_after_action": 5}'\
+      '"pause_after_action": 6' \
+    '}' \
   ']'\
 '}'
 
