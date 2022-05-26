@@ -97,6 +97,25 @@ WATER_LEAK_MSG = {
   "val_t": "str_map"
 }
 
+LOCK_DOOR_MSG = {
+  "ctime": "2020-12-04T20:19:25+0100",
+  "props": {
+    "timeout_s": "254",
+    "unsecured_desc": ""
+  },
+  "serv": "door_lock",
+  "tags": [],
+  "type": "evt.lock.report",
+  "val": {
+    "bolt_is_locked": False,
+    "door_is_closed": False,
+    "is_secured": True,
+    "latch_is_closed": False
+  },
+  "val_t": "bool_map"
+}
+
+
 
 def configure_client(client):
     client.on_message = None
