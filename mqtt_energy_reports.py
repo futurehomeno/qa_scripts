@@ -158,6 +158,7 @@ def on_message(client, userdata, message):
 def create_version_message(old_msg_payload):
     uid_ind = old_msg_payload.find("uid")
     uid = old_msg_payload[uid_ind+6:uid_ind+42]
+    
     print("UID old:" + str(uid))
     new_reponse = RESPONSE
     import uuid
