@@ -46,44 +46,44 @@ def configure_client(client):
 
 def on_message(client, userdata, message):
     if message.topic == SCHEDULE_TOPIC:
-
         msg_str = str(message.payload.decode("utf-8"))
-        msg = json.loads(msg_str)
-        now = datetime.datetime.now()
+        compare_data(json.loads(msg_str))
 
-        api_day = int(START_DAY[8:10])
 
-        if now.day > api_day + 1:
-            new_start_date = START_DAY.replace(str(api_day), str(now.day - 1))
-            k_prices_list, time_list = sort_data_from_api(get_data(new_start_date))
-        else:
-            k_prices_list, time_list = sort_data_from_api(get_data(START_DAY))
+def compare_data(msg):
+    now = datetime.datetime.now()
+    api_day = int(START_DAY[8:10])
+    if now.day > api_day + 1:
+        new_start_date = START_DAY.replace(str(api_day), str(now.day - 1))
+        k_prices_list, time_list = sort_data_from_api(get_data(new_start_date))
+    else:
+        k_prices_list, time_list = sort_data_from_api(get_data(START_DAY))
 
-        hours = now.hour
-        if hours == 24:
-            if msg['val']['price'] == k_prices_list[0] and msg['val']['from'].replace('+02:00', '').replace(str(hours),
-                                                                                                            str(hours - 2)) == \
-                    time_list[0]:
-                print("PASS: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
-                      time_list[hours])
-                print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[0])
-        elif hours == 25:
-            if msg['val']['price'] == k_prices_list[1] and msg['val']['from'].replace('+02:00', '').replace(str(hours),
-                                                                                                            str(hours - 2)) == \
-                    time_list[1]:
-                print("PASS: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
-                      time_list[hours])
-                print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[1])
-
-        elif msg['val']['price'] == k_prices_list[hours] and msg['val']['from'].replace('+02:00', '').replace(
-                str(hours), str(hours - 2)) == time_list[hours]:
+    hours = now.hour
+    if hours == 24:
+        if msg['val']['price'] == k_prices_list[0] and msg['val']['from'].replace('+02:00', '').replace(str(hours),
+                                                                                                        str(hours - 2)) == \
+                time_list[0]:
             print("PASS: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
                   time_list[hours])
-            print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[hours])
-        else:
-            print("FAIL: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
+            print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[0])
+    elif hours == 25:
+        if msg['val']['price'] == k_prices_list[1] and msg['val']['from'].replace('+02:00', '').replace(str(hours),
+                                                                                                        str(hours - 2)) == \
+                time_list[1]:
+            print("PASS: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
                   time_list[hours])
-            print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[hours])
+            print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[1])
+
+    elif msg['val']['price'] == k_prices_list[hours] and msg['val']['from'].replace('+02:00', '').replace(
+            str(hours), str(hours - 2)) == time_list[hours]:
+        print("PASS: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
+              time_list[hours])
+        print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[hours])
+    else:
+        print("FAIL: Start time from Energy Report: ", msg['val']['from'], " Start time from Schedule",
+              time_list[hours])
+        print("      Energy report: ", msg["val"]["price"], " Schedule: ", k_prices_list[hours])
 
 
 def get_data(start_time):
