@@ -19,8 +19,12 @@ LOGIN_DATA = {
     "username": "API_DATA_FUTUREHOME",
     "password": "wi14_miCNTmAN1)22"
 }
-# Prices scale
-k = 10
+
+SCHEDULE_TOPIC = "pt:j1c1/mt:evt/rt:cloud/rn:energy_guard/ad:energy_price"
+ENERGY_REPORT_TOPIC = 'pt:j1/mt:evt/rt:app/rn:energy_guard/ad:1'
+MQTT_HOST = 'localhost'
+
+prices_scale = 10
 
 
 class BearerAuth(requests.auth.AuthBase):
@@ -30,11 +34,6 @@ class BearerAuth(requests.auth.AuthBase):
     def __call__(self, r):
         r.headers["authorization"] = f"Bearer " + self.token
         return r
-
-
-# SCHEDULE_TOPIC = "pt:j1c1/mt:evt/rt:cloud/rn:energy_guard/ad:energy_price"
-SCHEDULE_TOPIC = 'pt:j1/mt:evt/rt:app/rn:energy_guard/ad:1'
-MQTT_HOST = 'localhost'
 
 
 def configure_client(client):
@@ -47,19 +46,22 @@ def configure_client(client):
 def on_message(client, userdata, message):
     if message.topic == SCHEDULE_TOPIC:
         msg_str = str(message.payload.decode("utf-8"))
-        compare_data(json.loads(msg_str))
+        compare_and_print_results(json.loads(msg_str), create_prices_time_lists())
 
 
-def compare_data(msg):
+def create_prices_time_lists():
     now = datetime.datetime.now()
     api_day = int(START_DAY[8:10])
     if now.day > api_day + 1:
         new_start_date = START_DAY.replace(str(api_day), str(now.day - 1))
-        k_prices_list, time_list = sort_data_from_api(get_data(new_start_date))
+        k_prices_list, time_list = create_data_lists_from_api(get_data(new_start_date))
     else:
-        k_prices_list, time_list = sort_data_from_api(get_data(START_DAY))
+        k_prices_list, time_list = create_data_lists_from_api(get_data(START_DAY))
+        hours = now.hour
+    return k_prices_list, time_list, hours
 
-    hours = now.hour
+
+def compare_and_print_results(msg, k_prices_list, time_list, hours):
     if hours == 24:
         if msg['val']['price'] == k_prices_list[0] and msg['val']['from'].replace('+02:00', '').replace(str(hours),
                                                                                                         str(hours - 2)) == \
@@ -98,7 +100,7 @@ def get_data(start_time):
     return json.loads(resp.text)
 
 
-def sort_data_from_api(response_info):
+def create_data_lists_from_api(response_info):
     prices_list = []
     time_list = []
     for price_info in response_info[0]['values']:
@@ -107,7 +109,7 @@ def sort_data_from_api(response_info):
     for time_info in response_info[0]['values']:
         time_list.append(time_info['startTime'].replace('Z', ""))
 
-    k_prices_list = [int(item / k) for item in prices_list]
+    k_prices_list = [int(item / prices_scale) for item in prices_list]
 
     return k_prices_list, time_list
 
@@ -117,8 +119,8 @@ resp = get_data(START_DAY)
 client = mqtt.Client("ScheduleTest")
 configure_client(client)
 client.loop_start()
-client.subscribe(SCHEDULE_TOPIC)
-print("Subscribing ", SCHEDULE_TOPIC)
+client.subscribe(ENERGY_REPORT_TOPIC)
+print("Subscribing ", ENERGY_REPORT_TOPIC)
 
 # 24h long test
 time.sleep(86400)
