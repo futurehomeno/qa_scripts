@@ -47,12 +47,12 @@ class MeterResetTester:
         client.loop_start()
         self.client = client
 
-    @staticmethod
-    def on_message(client, userdata, message):
+    def on_message(self, client, userdata, message):
         msg_str = str(message.payload.decode("utf-8"))
         print("message received " + msg_str)
         print("message topic=", message.topic)
         print("Measured energy:" + str(json.loads(msg_str)['val']))
+        self.current_energy_measured = float(str(json.loads(msg_str)['val']))
 
     def check_dev_energy_meter(self, addr):
         new_msg = METER_ELEC_GET_REPORT_MSG
