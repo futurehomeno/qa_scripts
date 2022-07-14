@@ -1,4 +1,6 @@
 from time import sleep
+from datetime import datetime
+
 import paho.mqtt.client as mqtt
 import json
 
@@ -28,6 +30,8 @@ METER_ELEC_GET_REPORT_MSG = {
   "val": "",
   "props": None,
   "tags": None,
+  "corid": "",
+  "ctime": "",
   "src": "tplex-ui",
   "ver": "1",
   "uid": "46dd96a2-9388-451c-b3f6-e43cfa4cb228",
@@ -61,6 +65,9 @@ class MeterResetTester:
         uid_new = str(uuid.uuid1())
         print("New uid:" + str(uid_new))
         new_msg['uid'] = uid_new
+        date = datetime.now()
+        print("Adding ctime: " + str(date))
+        new_msg['ctime'] = str(date.isoformat())
         msg_parsed = str(new_msg).replace("'", "\"")
         ret = self.client.publish(addr, msg_parsed)
         print('RETVAL:' + str(ret))
