@@ -1,10 +1,10 @@
 from time import sleep
-from datetime import datetime
 
 import paho.mqtt.client as mqtt
 import json
 
-DEVICES_ADDR_LIST = []
+# >>> PLEASE REMEMBMER TO MODIFY ADDRESSES BEFORE THE TEST <<<
+DEVICES_ADDR_LIST = ["124_0", "132_0"]
 
 MQTT_HOST = 'localhost'
 METER_ELEC_TOPIC_WRITE = "pt:j1/mt:cmd/rt:dev/rn:zw/ad:1/sv:meter_elec/ad:{}"
@@ -14,11 +14,7 @@ RESET_METER_MSG = {
   "serv": "meter_elec",
   "type": "cmd.meter.reset",
   "val_t": "null",
-  "val": None,
-  "props": {},
-  "tags": None,
   "src": "-",
-  "ver": "1",
   "uid": "932c9611-9386-4ac4-bda2-38d56e9f88b9",
   "topic": "pt:j1/mt:cmd/rt:dev/rn:zw/ad:1/sv:meter_elec/ad:124_0"
 }
@@ -28,13 +24,7 @@ METER_ELEC_GET_REPORT_MSG = {
   "type": "cmd.meter.get_report",
   "val_t": "string",
   "val": "",
-  "props": None,
-  "tags": None,
-  "corid": "",
-  "ctime": "",
-  "src": "tplex-ui",
-  "ver": "1",
-  "uid": "46dd96a2-9388-451c-b3f6-e43cfa4cb228",
+  "uid": "38150185-8ea3-44bd-a06d-69257704225f",
   "topic": "pt:j1/mt:cmd/rt:dev/rn:zw/ad:1/sv:meter_elec/ad:124_0"
 }
 
@@ -61,13 +51,6 @@ class MeterResetTester:
     def check_dev_energy_meter(self, addr):
         new_msg = METER_ELEC_GET_REPORT_MSG
         new_msg['topic'] = addr
-        import uuid
-        uid_new = str(uuid.uuid1())
-        print("New uid:" + str(uid_new))
-        new_msg['uid'] = uid_new
-        date = datetime.now()
-        print("Adding ctime: " + str(date))
-        new_msg['ctime'] = str(date.isoformat())
         msg_parsed = str(new_msg).replace("'", "\"")
         ret = self.client.publish(addr, msg_parsed)
         print('RETVAL:' + str(ret))
@@ -82,22 +65,21 @@ class MeterResetTester:
         sleep(4)
 
     def test_reset_measurement(self, addr):
-        self.client.subscribe(METER_ELEC_TOPIC_GET.format('124_0'))
-        self.check_dev_energy_meter(addr)
+        self.client.subscribe(METER_ELEC_TOPIC_GET.format(addr))
+        self.check_dev_energy_meter(METER_ELEC_TOPIC_WRITE.format(addr))
         measurement_before = self.current_energy_measured
         assert measurement_before != 0, "Nothing to reset if device meter elec reports 0 kWh"
-        self.send_device_reset_meter(addr)
+        self.send_device_reset_meter(METER_ELEC_TOPIC_WRITE.format(addr))
         sleep(10)
-        self.check_dev_energy_meter(addr)
+        self.check_dev_energy_meter(METER_ELEC_TOPIC_WRITE.format(addr))
         measurement_after_reset = self.current_energy_measured
         assert measurement_after_reset == 0, "Device is reporting non-zero ({}) " \
                                              "energy measurement after the reset!".format(measurement_after_reset)
 
 
-print("Launching the test procedure...")
-mrt = MeterResetTester()
-addr = METER_ELEC_TOPIC_WRITE.format('124_0')
-print("ADDR:" + str(addr))
-mrt.test_reset_measurement(addr)
-mrt.client.loop_stop()
-
+for addr in DEVICES_ADDR_LIST:
+    print("Launching the test procedure for addr {}...".format(addr))
+    mrt = MeterResetTester()
+    mrt.test_reset_measurement(addr)
+    mrt.client.loop_stop()
+    sleep(3)
